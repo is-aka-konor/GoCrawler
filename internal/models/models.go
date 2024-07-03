@@ -19,3 +19,11 @@ type Spell struct {
 	Source      string
 	Texts       []string
 }
+
+type ParserSettings struct {
+	StartPoint int
+	EndPoint   int
+	QueryParam string
+	BaseURL    string
+	Index      []string
+}

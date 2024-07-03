@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
-	a5e "GoCrawler/internal/models"
+	"GoCrawler/internal/models"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -33,13 +35,25 @@ func main() {
 		fmt.Println("Both domain and startURL arguments are required, either as flags or environment variables")
 		return
 	}
+	settings := models.ParserSettings{
+		StartPoint: 0,
+		EndPoint:   0,
+		QueryParam: "?combine=&field_spell_ritual_value=All&page=",
+		BaseURL:    startURL,
+	}
 	// // Initialize the collector
 	collector := colly.NewCollector()
+	// Add a random delay to the requests
+	collector.Limit(&colly.LimitRule{
+		DomainGlob:  "*a5e.tool*",
+		Parallelism: 2,
+		RandomDelay: 10 * time.Second,
+	})
 
-	var infoList []a5e.SpellList
+	infoList := make([]models.SpellList, 0, 450)
 
 	collector.OnHTML("td.views-field-title a", func(e *colly.HTMLElement) {
-		info := a5e.SpellList{
+		info := models.SpellList{
 			SpellUrl: e.Attr("href"),
 			Name:     e.Text,
 		}
@@ -51,6 +65,48 @@ func main() {
 		fmt.Println("Visiting", r.URL)
 	})
 
+	// Set error handler
+	collector.OnError(func(r *colly.Response, err error) {
+		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+	})
+
 	// Start the scraping process
-	collector.Visit(startURL)
+	for i := settings.StartPoint; i <= settings.EndPoint; i++ {
+		collector.Visit(settings.BaseURL + settings.QueryParam + fmt.Sprint(i))
+	}
+
+	dataCollector := collector.Clone()
+
+	dataCollector.OnHTML("h1.page-header", func(e *colly.HTMLElement) {
+		spell := models.Spell{
+			Name: e.Text,
+		}
+		fmt.Println("Spell:", spell.Name)
+	})
+
+	dataCollector.OnError(func(r *colly.Response, err error) {
+		fmt.Println("Data Collector Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
+	})
+
+	dataCollector.OnRequest(func(r *colly.Request) {
+		fmt.Println("Data Collector is visiting", r.URL)
+	})
+
+	for _, info := range infoList {
+		dataCollector.Visit(fmt.Sprintf("%s%s", domain, info.SpellUrl))
+	}
+
+	content, err := json.MarshalIndent(infoList, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshalling JSON: ", err)
+		return
+	}
+
+	// Write the JSON data to a file
+	err = os.WriteFile("spells.json", content, 0755)
+	if err != nil {
+		fmt.Println("Error creating file: ", err)
+		return
+	}
+
 }
