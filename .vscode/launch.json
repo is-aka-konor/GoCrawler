@@ -5,14 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Go App",
+            "name": "Debug WebCrawler",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd",
+            "program": "${workspaceFolder}/WebCrawler/cmd",
             "args": [
                 "-domain=https://a5e.tools",
                 "-startURL=https://a5e.tools/spells"
+            ]
+        },
+        {
+            "name": "Debug FileCrawler",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/FileCrawler/cmd",
+            "args": [
+                "-folder=../resources/html"
             ]
         }
     ]
