@@ -1,4 +1,4 @@
-module GoCrawler
+module WebCrawler
 
 go 1.22.4
 

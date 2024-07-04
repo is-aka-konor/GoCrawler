@@ -5,9 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	"GoCrawler/internal/models"
+	"WebCrawler/internal/models"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -37,7 +38,7 @@ func main() {
 	}
 	settings := models.ParserSettings{
 		StartPoint: 0,
-		EndPoint:   0,
+		EndPoint:   8,
 		QueryParam: "?combine=&field_spell_ritual_value=All&page=",
 		BaseURL:    startURL,
 	}
@@ -46,7 +47,7 @@ func main() {
 	// Add a random delay to the requests
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*a5e.tool*",
-		Parallelism: 2,
+		Parallelism: 4,
 		RandomDelay: 10 * time.Second,
 	})
 
@@ -90,6 +91,13 @@ func main() {
 
 	dataCollector.OnRequest(func(r *colly.Request) {
 		fmt.Println("Data Collector is visiting", r.URL)
+	})
+
+	dataCollector.OnResponse(func(r *colly.Response) {
+		error := r.Save(fmt.Sprintf("../FileCrawler/html/%s.html", strings.Replace(r.FileName(), ".unknown", "", -1)))
+		if error != nil {
+			fmt.Println("Error saving file: ", error)
+		}
 	})
 
 	for _, info := range infoList {
