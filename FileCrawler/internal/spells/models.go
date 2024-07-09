@@ -5,6 +5,7 @@ type Spell struct {
 	Level       int
 	School      string
 	CastingTime string
+	Target      string
 	Range       string
 	Components  []string
 	Duration    string
@@ -12,5 +13,6 @@ type Spell struct {
 	Ritual      bool
 	Classes     []string
 	Source      string
+	SavingThrow string
 	Texts       []string
 }
